@@ -1,0 +1,64 @@
+-- Libraries and packages required for VHDL code
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+
+-- Entity declaration for the digital clock module
+entity digital_clock is
+    Port ( clk : in STD_LOGIC;             -- Input clock signal
+           reset : in STD_LOGIC;           -- Reset signal to initialize clock
+           hours : out STD_LOGIC_VECTOR(3 downto 0);    -- Hours display output
+           minutes : out STD_LOGIC_VECTOR(5 downto 0);  -- Minutes display output
+           seconds : out STD_LOGIC_VECTOR(5 downto 0)); -- Seconds display output
+end digital_clock;
+
+-- Architecture defining the behavior of the digital clock module
+architecture Behavioral of digital_clock is
+    -- Signals to keep track of hours, minutes, and seconds
+    signal sec_count : integer range 0 to 59 := 0;   -- Seconds counter
+    signal min_count : integer range 0 to 59 := 0;   -- Minutes counter
+    signal hr_count : integer range 0 to 23 := 0;    -- Hours counter
+
+    -- Signal to generate a 1 Hz clock signal (1 Hz toggle)
+    signal clk_1hz : STD_LOGIC := '0';
+
+begin
+    -- Process that updates the time counters and generates 1 Hz signal
+    process (clk, reset)
+    begin
+        if reset = '1' then
+            -- Reset the time counters and 1 Hz signal on reset
+            sec_count <= 0;
+            min_count <= 0;
+            hr_count <= 0;
+            clk_1hz <= '0';
+        elsif rising_edge(clk) then
+            if sec_count = 59 then
+                -- Reset seconds counter and increment minutes counter when 59 seconds
+                sec_count <= 0;
+                if min_count = 59 then
+                    -- Reset minutes counter and increment hours counter when 59 minutes
+                    min_count <= 0;
+                    if hr_count = 23 then
+                        -- Reset hours counter at 23 hours
+                        hr_count <= 0;
+                    else
+                        hr_count <= hr_count + 1;
+                    end if;
+                else
+                    min_count <= min_count + 1;
+                end if;
+            else
+                sec_count <= sec_count + 1;  -- Increment seconds counter
+            end if;
+            
+            clk_1hz <= not clk_1hz;  -- Toggle the 1 Hz clock signal on each rising edge
+        end if;
+    end process;
+
+    -- Convert integer values of hours, minutes, and seconds to binary and assign to outputs
+    hours <= std_logic_vector(to_unsigned(hr_count, hours'length));
+    minutes <= std_logic_vector(to_unsigned(min_count, minutes'length));
+    seconds <= std_logic_vector(to_unsigned(sec_count, seconds'length));
+end Behavioral;
